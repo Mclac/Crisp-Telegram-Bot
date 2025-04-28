@@ -1,4 +1,3 @@
-
 import os
 import yaml
 import logging
@@ -81,9 +80,9 @@ async def onReply(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             )
             return
 
-# EasyImages Config
-EASYIMAGES_API_URL = config.get('easyimages', {}).get('apiUrl', '')
-EASYIMAGES_API_TOKEN = config.get('easyimages', {}).get('apiToken', '')
+# Image Hosting Config
+IMAGE_API_URL = config.get('image_hosting', {}).get('apiUrl', '')
+IMAGE_API_TOKEN = config.get('image_hosting', {}).get('apiToken', '')
 
 async def handleImage(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = update.effective_message
@@ -101,8 +100,8 @@ async def handleImage(update: Update, context: ContextTypes.DEFAULT_TYPE):
         file = await context.bot.get_file(file_id)
         file_url = file.file_path
 
-        # 上传图片到 EasyImages
-        uploaded_url = upload_image_to_easyimages(file_url)
+        # 上传图片到图床服务
+        uploaded_url = upload_image_to_hosting(file_url)
 
         # 生成 Markdown 格式的链接
         markdown_link = f"![Image]({uploaded_url})"
@@ -120,22 +119,49 @@ async def handleImage(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await msg.reply_text("图片上传失败，请稍后重试。")
         logging.error(f"图片上传错误: {e}")
 
-def upload_image_to_easyimages(file_url):
+def upload_image_to_hosting(file_url):
     try:
+        # 下载图片文件
         response = requests.get(file_url, stream=True)
         response.raise_for_status()
 
-        files = {
-            'image': ('image.jpg', response.raw, 'image/jpeg'),
-            'token': (None, EASYIMAGES_API_TOKEN)
+        # 准备请求头
+        headers = {
+            "Authorization": f"Bearer {IMAGE_API_TOKEN}",
+            "Accept": "application/json"
         }
-        res = requests.post(EASYIMAGES_API_URL, files=files)
+
+        # 准备文件数据
+        files = {
+            'file': ('image.jpg', response.raw, 'image/jpeg')
+        }
+
+        # 发送上传请求
+        res = requests.post(
+            f"{IMAGE_API_URL}/upload",
+            files=files,
+            headers=headers
+        )
+        
+        # 检查响应状态
+        if res.status_code != 200:
+            raise Exception(f"API returned status code {res.status_code}")
+
         res_data = res.json()
 
-        if res_data.get("result") == "success":
-            return res_data["url"]
-        else:
-            raise Exception(f"Image upload failed: {res_data}")
+        # 解析响应数据
+        if not res_data.get("status"):
+            error_msg = res_data.get("message", "Unknown error")
+            raise Exception(f"Image upload failed: {error_msg}")
+
+        if not res_data.get("data") or not res_data["data"].get("links"):
+            raise Exception("Invalid API response format")
+
+        return res_data["data"]["links"]["url"]
+
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Network error during image upload: {e}")
+        raise Exception("Network error occurred while uploading image")
     except Exception as e:
         logging.error(f"Error uploading image: {e}")
         raise
@@ -151,7 +177,7 @@ def send_markdown_to_client(session_id, markdown_link):
         # 将 Markdown 图片链接作为纯文本发送
         query = {
             "type": "text",
-            "content": markdown_link,  # 将图片链接当做普通文本
+            "content": markdown_link,
             "from": "operator",
             "origin": "chat",
             "user": {

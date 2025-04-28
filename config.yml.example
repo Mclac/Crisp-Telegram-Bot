@@ -10,10 +10,10 @@ crisp:
   key:
   # 网站 ID
   website:
-  # easyimages图床API
-easyimages:
-  apiUrl: "http://127.0.0.1/api/index.php"
-  apiToken: "token"
+  # 兰空图床API
+image_hosting:
+  apiUrl: "https://test.com/api/v1"
+  apiToken: "1|1bJbwlqBfnggmOMEZqXT5XusaIwqiZjCDs7r1Ob5"
 autoreply:
   # 自动关键词回复，你可以复制成多行，每个关键词用 `|` 隔开即可，在 `:` 后输入自动回复内容
   "在吗|你好": "欢迎使用客服系统，请等待客服回复你~"
