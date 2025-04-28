@@ -80,9 +80,9 @@ async def onReply(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             )
             return
 
-# Image Hosting Config
-IMAGE_API_URL = config.get('image_hosting', {}).get('apiUrl', '')
-IMAGE_API_TOKEN = config.get('image_hosting', {}).get('apiToken', '')
+# Lsky Pro Config
+LSKY_PRO_API_URL = config.get('Lsky_Pro', {}).get('apiUrl', '')
+LSKY_PRO_API_TOKEN = config.get('Lsky_Pro', {}).get('apiToken', '')
 
 async def handleImage(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = update.effective_message
@@ -100,8 +100,8 @@ async def handleImage(update: Update, context: ContextTypes.DEFAULT_TYPE):
         file = await context.bot.get_file(file_id)
         file_url = file.file_path
 
-        # 上传图片到图床服务
-        uploaded_url = upload_image_to_hosting(file_url)
+        # 上传图片到Lsky Pro
+        uploaded_url = upload_image_to_lsky_pro(file_url)
 
         # 生成 Markdown 格式的链接
         markdown_link = f"![Image]({uploaded_url})"
@@ -119,7 +119,7 @@ async def handleImage(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await msg.reply_text("图片上传失败，请稍后重试。")
         logging.error(f"图片上传错误: {e}")
 
-def upload_image_to_hosting(file_url):
+def upload_image_to_lsky_pro(file_url):
     try:
         # 下载图片文件
         response = requests.get(file_url, stream=True)
@@ -127,7 +127,7 @@ def upload_image_to_hosting(file_url):
 
         # 准备请求头
         headers = {
-            "Authorization": f"Bearer {IMAGE_API_TOKEN}",
+            "Authorization": f"Bearer {LSKY_PRO_API_TOKEN}",
             "Accept": "application/json"
         }
 
@@ -138,7 +138,7 @@ def upload_image_to_hosting(file_url):
 
         # 发送上传请求
         res = requests.post(
-            f"{IMAGE_API_URL}/upload",
+            f"{LSKY_PRO_API_URL}/upload",
             files=files,
             headers=headers
         )

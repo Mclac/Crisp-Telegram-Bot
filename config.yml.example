@@ -11,7 +11,7 @@ crisp:
   # 网站 ID
   website:
   # 兰空图床API
-image_hosting:
+Lsky_Pro:
   apiUrl: "https://test.com/api/v1"
   apiToken: "1|1bJbwlqBfnggmOMEZqXT5XusaIwqiZjCDs7r1Ob5"
 autoreply:
